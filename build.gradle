@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+}
+
+group 'lk.inli.rest'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    maven {
+        url '../mvn'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.apache.cxf', name: 'cxf-rt-frontend-jaxrs', version: '3.3.2'
+    compile group: 'org.apache.cxf', name: 'cxf-rt-transports-http-jetty', version: '3.3.2'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.9'
+    compile group: 'org.codehaus.jackson', name: 'jackson-jaxrs', version: '1.9.13'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.11.2'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.11.2'
+    compile group: 'org.slf4j', name: 'slf4j-jdk14', version: '1.7.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+//Copy all dependencies to a folder and later add them to the class-path
+task copyDependencies (type: Copy) {
+    def target = "build/libs/dependencies"
+    file(target).mkdirs()
+    from configurations.compile
+    into target
+}
+
+//Create a single Jar with all dependencies
+task packageJar(type: Jar) {
+    dependsOn test
+    dependsOn copyDependencies
+
+    manifest {
+        attributes(
+            'Implementation-Title': 'Perfect Number API',
+            'Implementation-Version': version,
+            'Main-Class': 'lk.inli.rest.Application',
+            "Class-Path": '. dependencies/' + configurations.compile.collect { it.getName() }.join(' dependencies/')
+        )
+    }
+    with jar
+}
